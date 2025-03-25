@@ -1,0 +1,43 @@
+version: '2.2'
+services:
+  nitro:
+    image: ghcr.io/espressosystems/nitro-espresso-integration/nitro-node:integration
+    container_name: nitro-node
+    ports:
+      - "8547:8547"
+      - "8548:8548"
+      - "8549:8549"
+    command: --conf.file /config/full_node.json
+    volumes:
+      - ./config:/config
+      - ./wasm:/home/user/wasm/
+      - ./database:/home/user/.arbitrum
+    depends_on:
+      - validation_node
+          # ===== CloudWatch Configuration Start =====
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1b" # Update to your EC2 instance's region
+        awslogs-group: "nitro-node-logs"
+        awslogs-stream: "nitro-node"
+    # ===== CloudWatch Configuration End =====
+
+
+  validation_node:
+    image: ghcr.io/espressosystems/nitro-espresso-integration/nitro-node:integration
+    container_name: validation_node
+    ports:
+      - "8949:8549"
+    volumes:
+      - ./config:/config
+    entrypoint: /usr/local/bin/nitro-val
+    command: --conf.file /config/validation_node_config.json
+    # ===== CloudWatch Configuration Start =====
+    logging:
+      driver: "awslogs"
+      options:
+        awslogs-region: "ap-south-1b" # Update to your EC2 instance's region
+        awslogs-group: "validation-node-logs"
+        awslogs-stream: "validation-node"
+    # ===== CloudWatch Configuration End =====
